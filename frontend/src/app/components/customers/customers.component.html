@@ -1,0 +1,258 @@
+<div class="customers-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1 class="page-title">Patients & Customers Directory</h1>
+      <p class="page-desc">Manage customer contact information, delivery addresses, and prescription history.</p>
+    </div>
+    <button class="btn btn-primary" (click)="openCreateModal()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <line x1="19" x2="19" y1="8" y2="14"/>
+        <line x1="22" x2="16" y1="11" y2="11"/>
+      </svg>
+      <span>+ Add New Customer</span>
+    </button>
+  </div>
+
+  <!-- Search Toolbar -->
+  <div class="toolbar card">
+    <div class="search-box">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" x2="21" y1="21" y2="16.65"/>
+      </svg>
+      <input type="text" [(ngModel)]="searchTerm" (input)="onSearch()" placeholder="Search by patient name, phone number, address...">
+    </div>
+    <span class="count-badge">{{ customers.length }} Registered Patient{{ customers.length === 1 ? '' : 's' }}</span>
+  </div>
+
+  <!-- Customer Cards Grid -->
+  @if (isLoading) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading patient directory...</p>
+    </div>
+  } @else if (customers.length === 0) {
+    <div class="empty-state">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="m15 9-6 6"/>
+        <path d="m9 9 6 6"/>
+      </svg>
+      <h3>No customers found</h3>
+      <p>No customer records matched your search query.</p>
+      <button class="btn btn-primary btn-sm" (click)="openCreateModal()">+ Add First Customer</button>
+    </div>
+  } @else {
+    <div class="customer-grid">
+      @for (cust of customers; track cust.id) {
+        <div class="customer-card card">
+          <div class="card-top">
+            <div class="avatar">{{ getInitials(cust.name) }}</div>
+            <div class="cust-info">
+              <h3 class="cust-name">{{ cust.name }}</h3>
+              @if (cust.phone) {
+                <span class="cust-phone">{{ cust.phone }}</span>
+              }
+            </div>
+          </div>
+
+          <div class="card-address">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+            <span class="address-text">{{ cust.address || 'No address specified' }}</span>
+          </div>
+
+          <div class="card-actions">
+            <button class="btn btn-secondary btn-sm" (click)="viewCustomerDetails(cust)">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              <span>View Prescriptions</span>
+            </button>
+
+            @if (cust.phone) {
+              <a [href]="getWhatsAppUrl(cust)" target="_blank" class="btn btn-whatsapp btn-sm icon-only" title="WhatsApp Patient">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2z"/>
+                </svg>
+              </a>
+
+              <a [href]="'tel:' + cust.phone" class="btn btn-secondary btn-sm icon-only" title="Call">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                </svg>
+              </a>
+            }
+
+            <button class="btn btn-secondary btn-sm icon-only" (click)="openEditModal(cust)" title="Edit Patient Details">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+              </svg>
+            </button>
+
+            <button class="btn btn-danger btn-sm icon-only" (click)="confirmDelete(cust)" title="Delete Patient Record">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 6h18"/>
+                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Add / Edit Customer Modal -->
+  @if (isModalOpen) {
+    <div class="modal-overlay" (click)="closeModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>{{ isEditMode ? 'Edit Customer' : 'Add New Customer' }}</h3>
+          <button class="btn-close" (click)="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Patient Full Name *</label>
+            <input type="text" class="form-input" [(ngModel)]="customerForm.name" placeholder="e.g. Sarah Connor">
+          </div>
+
+          <div class="form-group">
+            <label>Phone Number (WhatsApp capable)</label>
+            <input type="tel" class="form-input" [(ngModel)]="customerForm.phone" placeholder="e.g. +91 98765 43210">
+          </div>
+
+          <div class="form-group">
+            <label>Delivery Address</label>
+            <textarea class="form-textarea" [(ngModel)]="customerForm.address" placeholder="e.g. Apartment 12B, Ocean Heights, Bayview"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="closeModal()" [disabled]="isSaving">Cancel</button>
+          <button class="btn btn-primary" (click)="saveCustomer()" [disabled]="isSaving">
+            {{ isSaving ? 'Saving...' : (isEditMode ? 'Update Customer' : 'Save Customer') }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Customer Detail & Prescriptions View Modal -->
+  @if (selectedCustomer) {
+    <div class="modal-overlay" (click)="closeDetailsModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()" style="max-width: 680px;">
+        <div class="modal-header">
+          <div>
+            <h3>{{ selectedCustomer.name }}</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">
+              {{ selectedCustomer.phone || 'No phone' }} &bull; {{ selectedCustomer.address || 'No address' }}
+            </p>
+          </div>
+          <button class="btn-close" (click)="closeDetailsModal()">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+            <h4 style="font-size: 1rem;">Active Prescriptions & Refills ({{ customerSchedules.length }})</h4>
+            <button class="btn btn-primary btn-sm" (click)="openAddRefill()">+ Add Refill Medicine</button>
+          </div>
+
+          <!-- Add inline refill form -->
+          @if (isAddRefillOpen) {
+            <div class="add-refill-box card" style="margin-bottom: 20px; background: #0f172a;">
+              <h5 style="margin-bottom: 12px; font-size: 0.9rem; color: var(--primary);">Add Medicine Schedule for {{ selectedCustomer.name }}</h5>
+              <div class="form-group">
+                <label>Medicine Name & Dosage *</label>
+                <input type="text" class="form-input" [(ngModel)]="refillForm.medicine_name" placeholder="Enter medicine name & dosage">
+              </div>
+              <div class="form-row">
+                <div class="form-group" style="flex: 1;">
+                  <label>Last Delivered Date *</label>
+                  <input type="date" class="form-input" [(ngModel)]="refillForm.last_delivered_date">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                  <label>Remind Every (Days) *</label>
+                  <div style="position: relative;">
+                    <input type="number" min="1" max="365" class="form-input" [(ngModel)]="refillForm.interval_days" placeholder="e.g. 8, 16, 30">
+                    <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.8rem; color: var(--text-muted); pointer-events: none;">Days</span>
+                  </div>
+                </div>
+              </div>
+              <div class="form-group">
+                <label>Notes</label>
+                <input type="text" class="form-input" [(ngModel)]="refillForm.notes" placeholder="e.g. 1 tab at bedtime">
+              </div>
+              <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                <button class="btn btn-secondary btn-sm" (click)="isAddRefillOpen = false">Cancel</button>
+                <button class="btn btn-primary btn-sm" (click)="saveRefill()">Save Medicine</button>
+              </div>
+            </div>
+          }
+
+          @if (isLoadingSchedules) {
+            <div class="loading-state" style="padding: 24px;">
+              <div class="spinner"></div>
+              <p>Loading prescriptions...</p>
+            </div>
+          } @else if (customerSchedules.length === 0) {
+            <div class="empty-state" style="padding: 24px;">
+              <p>No active medicine refills scheduled for this patient.</p>
+            </div>
+          } @else {
+            <div class="prescriptions-list">
+              @for (sched of customerSchedules; track sched.id) {
+                <div class="prescription-item">
+                  <div class="prescription-left">
+                    <span class="med-name">{{ sched.medicine_name }}</span>
+                    <span class="med-dates">Next refill: <strong>{{ sched.next_schedule_date }}</strong> (Last: {{ sched.last_delivered_date }})</span>
+                    @if (sched.notes) {
+                      <span class="med-notes">{{ sched.notes }}</span>
+                    }
+                  </div>
+                  <div>
+                    @switch (sched.status) {
+                      @case ('OVER_DUE') { <span class="badge badge-overdue">Overdue</span> }
+                      @case ('DUE_TODAY') { <span class="badge badge-due">Due Today</span> }
+                      @case ('PENDING') { <span class="badge badge-pending">Pending</span> }
+                      @case ('COMPLETED') { <span class="badge badge-completed">Completed</span> }
+                    }
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="closeDetailsModal()">Close</button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Delete Confirmation Modal -->
+  @if (customerToDelete) {
+    <div class="modal-overlay" (click)="cancelDelete()">
+      <div class="modal-content" (click)="$event.stopPropagation()" style="max-width: 440px;">
+        <div class="modal-header">
+          <h3>Delete Customer</h3>
+          <button class="btn-close" (click)="cancelDelete()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to delete patient <strong>{{ customerToDelete.name }}</strong>?</p>
+          <p style="font-size: 0.825rem; color: #f43f5e; margin-top: 10px;">All associated delivery schedules for this customer will also be permanently removed.</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="cancelDelete()">Cancel</button>
+          <button class="btn btn-danger" (click)="executeDelete()">Delete Patient</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

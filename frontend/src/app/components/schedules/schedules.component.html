@@ -1,0 +1,321 @@
+<div class="schedules-page">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1 class="page-title">Delivery & Refill Schedules</h1>
+      <p class="page-desc">Track, update, and dispatch ongoing recurring medicine subscriptions for patients.</p>
+    </div>
+    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+      <button class="btn btn-secondary" (click)="downloadPdf()" [disabled]="isExportingPdf" title="Download all schedules as PDF">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="12" y1="18" x2="12" y2="12"/>
+          <polyline points="9 15 12 18 15 15"/>
+        </svg>
+        <span>{{ isExportingPdf ? 'Exporting...' : 'Download PDF' }}</span>
+      </button>
+      <button class="btn btn-primary" (click)="openCreateModal()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="16"/>
+          <line x1="8" y1="12" x2="16" y2="12"/>
+        </svg>
+        <span>+ Add Delivery Schedule</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Search & Filters Toolbar -->
+  <div class="toolbar card">
+    <div class="filter-tabs">
+      <button class="tab-btn" [class.active]="selectedStatus === 'ALL'" (click)="onFilterStatus('ALL')">All Schedules</button>
+      <button class="tab-btn tab-due" [class.active]="selectedStatus === 'DUE_TODAY'" (click)="onFilterStatus('DUE_TODAY')">Due Today</button>
+      <button class="tab-btn tab-overdue" [class.active]="selectedStatus === 'OVER_DUE'" (click)="onFilterStatus('OVER_DUE')">Overdue</button>
+      <button class="tab-btn tab-pending" [class.active]="selectedStatus === 'PENDING'" (click)="onFilterStatus('PENDING')">Pending</button>
+      <button class="tab-btn tab-completed" [class.active]="selectedStatus === 'COMPLETED'" (click)="onFilterStatus('COMPLETED')">Completed</button>
+    </div>
+
+    <div class="search-box">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="8"/>
+        <line x1="21" x2="21" y1="21" y2="16.65"/>
+      </svg>
+      <input type="text" [(ngModel)]="searchTerm" (input)="onSearch()" placeholder="Search patient, medicine, phone...">
+    </div>
+  </div>
+
+  <!-- Schedules Content List -->
+  @if (isLoading) {
+    <div class="loading-state">
+      <div class="spinner"></div>
+      <p>Loading delivery schedules...</p>
+    </div>
+  } @else if (schedules.length === 0) {
+    <div class="empty-state">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="m15 9-6 6"/>
+        <path d="m9 9 6 6"/>
+      </svg>
+      <h3>No schedules found</h3>
+      <p>No delivery schedules matched your selected status or filter criteria.</p>
+      <button class="btn btn-primary btn-sm" (click)="openCreateModal()">+ Create New Schedule</button>
+    </div>
+  } @else {
+    <div class="schedule-table-card card">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Customer / Patient</th>
+            <th>Medicine & Dosage</th>
+            <th>Last Delivered</th>
+            <th>Next Schedule</th>
+            <th>Status</th>
+            <th>Notes</th>
+            <th style="text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (schedule of schedules; track schedule.id) {
+            <tr [class.row-overdue]="schedule.status === 'OVER_DUE'" [class.row-due]="schedule.status === 'DUE_TODAY'">
+              <td>
+                <div class="customer-cell">
+                  <span class="customer-name">{{ schedule.customer_name || 'Customer' }}</span>
+                  @if (schedule.customer_phone) {
+                    <span class="customer-phone">{{ schedule.customer_phone }}</span>
+                  }
+                </div>
+              </td>
+              <td>
+                <div class="medicine-cell">
+                  <span class="medicine-title">{{ schedule.medicine_name }}</span>
+                </div>
+              </td>
+              <td>
+                <span class="date-text">{{ schedule.last_delivered_date }}</span>
+              </td>
+              <td>
+                <div class="next-date-cell">
+                  <span class="date-text font-bold">{{ schedule.next_schedule_date }}</span>
+                  <span class="relative-time" [class.overdue-text]="schedule.status === 'OVER_DUE'" [class.due-text]="schedule.status === 'DUE_TODAY'">
+                    {{ getRelativeDays(schedule.next_schedule_date) }}
+                  </span>
+                </div>
+              </td>
+              <td>
+                @switch (schedule.status) {
+                  @case ('OVER_DUE') {
+                    <span class="badge badge-overdue">Overdue</span>
+                  }
+                  @case ('DUE_TODAY') {
+                    <span class="badge badge-due">Due Today</span>
+                  }
+                  @case ('PENDING') {
+                    <span class="badge badge-pending">Pending</span>
+                  }
+                  @case ('COMPLETED') {
+                    <span class="badge badge-completed">Completed</span>
+                  }
+                }
+              </td>
+              <td>
+                <span class="notes-text" [title]="schedule.notes || ''">{{ schedule.notes || '—' }}</span>
+              </td>
+              <td>
+                <div class="actions-cell">
+                  <!-- Mark Delivered button -->
+                  @if (schedule.status !== 'COMPLETED') {
+                    <button class="btn btn-success btn-sm" (click)="openDeliverModal(schedule)" title="Mark as delivered & advance schedule">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                      <span>Delivered</span>
+                    </button>
+                  }
+
+                  <!-- WhatsApp button -->
+                  @if (schedule.customer_phone) {
+                    <a [href]="getWhatsAppUrl(schedule)" target="_blank" class="btn btn-whatsapp btn-sm icon-only" title="Send WhatsApp Reminder">
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2z"/>
+                      </svg>
+                    </a>
+                  }
+
+                  <!-- Edit button -->
+                  <button class="btn btn-secondary btn-sm icon-only" (click)="openEditModal(schedule)" title="Edit Schedule">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                    </svg>
+                  </button>
+
+                  <!-- Delete button -->
+                  <button class="btn btn-danger btn-sm icon-only" (click)="confirmDelete(schedule)" title="Delete Schedule">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M3 6h18"/>
+                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                    </svg>
+                  </button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- Add / Edit Schedule Modal -->
+  @if (isModalOpen) {
+    <div class="modal-overlay" (click)="closeModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>{{ isEditMode ? 'Edit Delivery Schedule' : 'Create Delivery Schedule' }}</h3>
+          <button class="btn-close" (click)="closeModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <!-- Customer Selection -->
+          <div class="form-group">
+            <label>Customer / Patient *</label>
+            <select class="form-select" [(ngModel)]="scheduleForm.customer_id" [disabled]="isEditMode">
+              <option value="" disabled>Select a patient</option>
+              @for (cust of customers; track cust.id) {
+                <option [value]="cust.id">{{ cust.name }} {{ cust.phone ? '(' + cust.phone + ')' : '' }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Medicine Name & Dosage (Manual Entry) -->
+          <div class="form-group">
+            <label>Medicine Name & Dosage *</label>
+            <input type="text" class="form-input" [(ngModel)]="scheduleForm.medicine_name" placeholder="Enter medicine name & dosage">
+          </div>
+
+          <!-- Dates & Custom Interval -->
+          <div class="form-row">
+            <div class="form-group" style="flex: 1;">
+              <label>Last Delivery Date *</label>
+              <input type="date" class="form-input" [(ngModel)]="scheduleForm.last_delivered_date" (change)="calculateNextDate()">
+            </div>
+
+            <div class="form-group" style="flex: 1;">
+              <label>Remind Every (Days) *</label>
+              <div style="position: relative;">
+                <input type="number" min="1" max="365" class="form-input" [(ngModel)]="scheduleForm.interval_days" (input)="calculateNextDate()" placeholder="e.g. 8, 16, 30">
+                <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.8rem; color: var(--text-muted); pointer-events: none;">Days</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Quick Interval Shortcut Chips -->
+          <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: -6px; margin-bottom: 8px;">
+            <span style="font-size: 0.75rem; color: var(--text-muted);">Quick preset:</span>
+            <button type="button" class="pill-btn" (click)="setInterval(7)">7d</button>
+            <button type="button" class="pill-btn" (click)="setInterval(8)">8d</button>
+            <button type="button" class="pill-btn" (click)="setInterval(14)">14d</button>
+            <button type="button" class="pill-btn" (click)="setInterval(16)">16d</button>
+            <button type="button" class="pill-btn" (click)="setInterval(30)">30d</button>
+            <button type="button" class="pill-btn" (click)="setInterval(60)">60d</button>
+          </div>
+
+          <div class="form-group">
+            <label>Next Delivery Schedule Date *</label>
+            <input type="date" class="form-input" [(ngModel)]="scheduleForm.next_schedule_date" (change)="calculateIntervalFromNextDate()" style="border-color: var(--primary);">
+            <small style="color: var(--text-secondary); margin-top: 4px;">
+              💡 Automatically calculates: <strong>{{ scheduleForm.last_delivered_date }} + {{ scheduleForm.interval_days || 0 }} days = {{ scheduleForm.next_schedule_date }}</strong>
+            </small>
+          </div>
+
+          <div class="form-group">
+            <label>Instructions & Notes</label>
+            <textarea class="form-textarea" [(ngModel)]="scheduleForm.notes" placeholder="e.g. Take 1 tablet morning after breakfast. Deliver with insulated pack if required."></textarea>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="closeModal()" [disabled]="isSaving">Cancel</button>
+          <button class="btn btn-primary" (click)="saveSchedule()" [disabled]="isSaving">
+            {{ isSaving ? 'Saving...' : (isEditMode ? 'Update Schedule' : 'Create Schedule') }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Deliver Modal Dialog -->
+  @if (isDeliverModalOpen && selectedSchedule) {
+    <div class="modal-overlay" (click)="closeDeliverModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h3>Confirm Medicine Delivery</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">{{ selectedSchedule.medicine_name }} for {{ selectedSchedule.customer_name }}</p>
+          </div>
+          <button class="btn-close" (click)="closeDeliverModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Next Refill Interval (Days)</label>
+            <div style="position: relative;">
+              <input type="number" min="1" max="365" class="form-input" [(ngModel)]="deliverCycleDays" [disabled]="isCompleteOnly" placeholder="e.g. 8, 16, 30">
+              <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.8rem; color: var(--text-muted); pointer-events: none;">Days</span>
+            </div>
+
+            <!-- Quick Chips for Deliver Modal -->
+            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 8px;">
+              <button type="button" class="pill-btn" (click)="setDeliverCycle(7)">7 days</button>
+              <button type="button" class="pill-btn" (click)="setDeliverCycle(8)">8 days</button>
+              <button type="button" class="pill-btn" (click)="setDeliverCycle(14)">14 days</button>
+              <button type="button" class="pill-btn" (click)="setDeliverCycle(16)">16 days</button>
+              <button type="button" class="pill-btn" (click)="setDeliverCycle(30)">30 days</button>
+            </div>
+
+            @if (!isCompleteOnly) {
+              <div style="margin-top: 8px; font-size: 0.8rem; color: #38bdf8;">
+                📅 Next delivery will be scheduled for: <strong>{{ getComputedDeliverDate() }}</strong>
+              </div>
+            }
+          </div>
+
+          <div class="form-group" style="flex-direction: row; align-items: center; gap: 8px;">
+            <input type="checkbox" id="completeOnlyCheck" [(ngModel)]="isCompleteOnly" style="width: 18px; height: 18px; cursor: pointer;">
+            <label for="completeOnlyCheck" style="cursor: pointer; margin: 0;">Completed course (Do not schedule next refill)</label>
+          </div>
+
+          <div class="form-group">
+            <label>Delivery Confirmation Notes</label>
+            <textarea class="form-textarea" [(ngModel)]="deliverNotes" placeholder="e.g. Delivered 30 days pack, collected payment."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="closeDeliverModal()" [disabled]="isProcessingDelivery">Cancel</button>
+          <button class="btn btn-primary" (click)="confirmDelivery()" [disabled]="isProcessingDelivery">
+            {{ isProcessingDelivery ? 'Processing...' : 'Confirm Delivery' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Delete Confirmation Dialog -->
+  @if (scheduleToDelete) {
+    <div class="modal-overlay" (click)="cancelDelete()">
+      <div class="modal-content" (click)="$event.stopPropagation()" style="max-width: 440px;">
+        <div class="modal-header">
+          <h3>Delete Delivery Schedule</h3>
+          <button class="btn-close" (click)="cancelDelete()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to delete the delivery schedule for <strong>{{ scheduleToDelete.medicine_name }}</strong> (Patient: {{ scheduleToDelete.customer_name }})?</p>
+          <p style="font-size: 0.825rem; color: #f43f5e; margin-top: 10px;">This action cannot be undone.</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="cancelDelete()">Cancel</button>
+          <button class="btn btn-danger" (click)="executeDelete()">Delete</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

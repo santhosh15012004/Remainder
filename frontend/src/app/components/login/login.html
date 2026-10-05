@@ -1,0 +1,77 @@
+<div class="login-wrapper">
+  <div class="login-card">
+    <!-- Brand Header -->
+    <div class="login-header">
+      <div class="brand-badge">
+        <img src="assets/logo.png" alt="Remainder Logo" class="brand-badge-img">
+      </div>
+      <h1 class="portal-title">Remainder</h1>
+      <p class="portal-subtitle">Medicine Refill & Delivery Management</p>
+    </div>
+
+    @if (message) {
+      <div class="login-alert" [class.alert-danger]="isError" [class.alert-success]="!isError">
+        {{ message }}
+      </div>
+    }
+
+    <!-- Form -->
+    <form [formGroup]="loginform" (ngSubmit)="login()" class="login-form">
+      <div class="form-group">
+        <label for="email">Staff Email Address</label>
+        <input 
+          id="email"
+          type="email" 
+          formControlName="email"
+          class="form-input"
+          placeholder="admin@pharmacy.com" 
+          required/>
+        @if (loginform.get('email')?.touched && loginform.get('email')?.hasError('required')) {
+          <span class="form-error">Email address is required</span>
+        }
+        @if (loginform.get('email')?.touched && loginform.get('email')?.hasError('email')) {
+          <span class="form-error">Please enter a valid email</span>
+        }
+      </div>
+
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input
+          id="password"
+          type="password"
+          formControlName="password"
+          class="form-input"
+          placeholder="••••••••"
+          required/>
+        @if (loginform.get('password')?.touched && loginform.get('password')?.hasError('required')) {
+          <span class="form-error">Password is required</span>
+        }
+      </div>
+
+      <button type="submit" class="btn btn-primary btn-block" [disabled]="isLoading">
+        @if (isLoading) {
+          <div class="spinner-sm"></div>
+          <span>Signing in...</span>
+        } @else {
+          <span>Sign In to Dashboard &rarr;</span>
+        }
+      </button>
+    </form>
+
+    <div class="divider">
+      <span>OR QUICK ACCESS</span>
+    </div>
+
+    <!-- 1-Click Demo Login -->
+    <button type="button" class="btn btn-secondary btn-block demo-btn" (click)="loginAsDemo()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polygon points="5 3 19 12 5 21 5 3"/>
+      </svg>
+      <span>Instant Demo Access (Bypass Login)</span>
+    </button>
+
+    <div class="login-footer">
+      <p>Secure Enterprise Portal &bull; Antigravity Pharmacy Systems</p>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,34 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+frontend/dist/
+frontend/.angular/
+
+# Python virtual env
+.venv/
+
+# IDE
+.vscode/
+.idea/
+
+# APK build artifacts
+*.apk
+
+# Android build
+frontend/android/.gradle/
+frontend/android/app/build/
+frontend/android/build/
+frontend/android/capacitor-cordova-android-plugins/build/
+frontend/android/capacitor-android/build/
+frontend/android/capacitor-filesystem/build/
+frontend/android/capacitor-local-notifications/build/
+frontend/android/capacitor-share/build/
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*

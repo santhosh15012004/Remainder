@@ -1,0 +1,402 @@
+<div class="dashboard-page">
+  <!-- Top Greeting & Actions Bar -->
+  <div class="page-header">
+    <div class="header-left">
+      <h1 class="page-title">Delivery Operations Dashboard</h1>
+      <p class="page-desc">Real-time status of medicine refills, upcoming dispatches, and patient alerts.</p>
+    </div>
+    <div class="header-actions">
+      <button class="btn btn-secondary" (click)="openAlarmSettings()" title="Phone Alarm & Advance Notification Settings">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+        <span>⏰ Phone Alarms</span>
+      </button>
+
+      <button class="btn btn-secondary" (click)="loadDashboardData()" [disabled]="isLoading">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" [class.spinning]="isLoading">
+          <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+          <path d="M3 3v5h5"/>
+          <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16"/>
+          <path d="M16 21h5v-5"/>
+        </svg>
+        <span>Refresh</span>
+      </button>
+
+      <button class="btn btn-secondary" (click)="openCustomerModal()">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <line x1="19" x2="19" y1="8" y2="14"/>
+          <line x1="22" x2="16" y1="11" y2="11"/>
+        </svg>
+        <span>+ Add Customer</span>
+      </button>
+
+      <a routerLink="/schedules" class="btn btn-primary">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" x2="12" y1="8" y2="16"/>
+          <line x1="8" x2="12" y1="12" y2="12"/>
+        </svg>
+        <span>+ Schedule Delivery</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Attention Banner if there are overdue or due today deliveries -->
+  @if ((stats.overdue + stats.due_today) > 0) {
+    <div class="alert-banner">
+      <div class="alert-icon">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" x2="12" y1="8" y2="12"/>
+          <line x1="12" x2="12.01" y1="16" y2="16"/>
+        </svg>
+      </div>
+      <div class="alert-text">
+        <strong>Dispatch Alert:</strong> You have 
+        <span class="highlight-urgent">{{ stats.due_today }} due today</span> and 
+        <span class="highlight-urgent">{{ stats.overdue }} overdue</span> medicine refills requiring dispatch or patient confirmation.
+      </div>
+    </div>
+  }
+
+  <!-- 4 KPI Metrics Grid -->
+  <div class="metrics-grid">
+    <!-- Overdue Card -->
+    <div class="metric-card card-overdue">
+      <div class="metric-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+      </div>
+      <div class="metric-info">
+        <span class="metric-label">Overdue Deliveries</span>
+        <span class="metric-value">{{ stats.overdue }}</span>
+        <span class="metric-sub">Past scheduled date</span>
+      </div>
+    </div>
+
+    <!-- Due Today Card -->
+    <div class="metric-card card-due">
+      <div class="metric-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M8 2v4"/>
+          <path d="M16 2v4"/>
+          <rect width="18" height="18" x="3" y="4" rx="2"/>
+          <path d="M3 10h18"/>
+          <path d="M8 14h.01"/>
+          <path d="M12 14h.01"/>
+          <path d="M16 14h.01"/>
+        </svg>
+      </div>
+      <div class="metric-info">
+        <span class="metric-label">Due Today</span>
+        <span class="metric-value">{{ stats.due_today }}</span>
+        <span class="metric-sub">Scheduled for {{ todayDate | date:'mediumDate' }}</span>
+      </div>
+    </div>
+
+    <!-- Upcoming This Week Card -->
+    <div class="metric-card card-pending">
+      <div class="metric-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="18" height="18" x="3" y="4" rx="2"/>
+          <path d="M3 10h18"/>
+          <path d="M10 14l2 2 4-4"/>
+        </svg>
+      </div>
+      <div class="metric-info">
+        <span class="metric-label">Upcoming (7 Days)</span>
+        <span class="metric-value">{{ stats.due_this_week }}</span>
+        <span class="metric-sub">Scheduled refills coming up</span>
+      </div>
+    </div>
+
+    <!-- Total Active Customers Card -->
+    <div class="metric-card card-customers">
+      <div class="metric-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+      </div>
+      <div class="metric-info">
+        <span class="metric-label">Registered Customers</span>
+        <span class="metric-value">{{ stats.total_customers }}</span>
+        <span class="metric-sub">{{ stats.total_schedules }} active medicine refill plans</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Priority Refills Section -->
+  <section class="section-container">
+    <div class="section-header">
+      <div>
+        <h2 class="section-title">Priority Refills Requiring Action</h2>
+        <p class="section-subtitle">Deliveries scheduled for today or overdue patient orders</p>
+      </div>
+      <a routerLink="/schedules" class="btn btn-secondary btn-sm">
+        View All Schedules &rarr;
+      </a>
+    </div>
+
+    @if (stats.urgent_schedules.length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+            <polyline points="22 4 12 14.01 9 11.01"/>
+          </svg>
+        </div>
+        <h3>All caught up!</h3>
+        <p>There are no overdue or pending deliveries due today. You are completely up to date.</p>
+      </div>
+    } @else {
+      <div class="urgent-grid">
+        @for (item of stats.urgent_schedules; track item.id) {
+          <div class="urgent-card" [class.urgent-card-overdue]="item.status === 'OVER_DUE'">
+            <div class="urgent-card-header">
+              <div>
+                <h3 class="patient-name">{{ item.customer_name || 'Customer' }}</h3>
+                <span class="medicine-badge">{{ item.medicine_name }}</span>
+              </div>
+              <span class="badge" [ngClass]="item.status === 'OVER_DUE' ? 'badge-overdue' : 'badge-due'">
+                {{ item.status === 'OVER_DUE' ? 'Overdue' : 'Due Today' }}
+              </span>
+            </div>
+
+            <div class="urgent-card-details">
+              <div class="detail-row">
+                <span class="detail-label">Next Due:</span>
+                <span class="detail-value highlight">{{ item.next_schedule_date }}</span>
+              </div>
+              <div class="detail-row">
+                <span class="detail-label">Last Delivered:</span>
+                <span class="detail-value">{{ item.last_delivered_date }}</span>
+              </div>
+              @if (item.customer_phone) {
+                <div class="detail-row">
+                  <span class="detail-label">Phone:</span>
+                  <span class="detail-value">{{ item.customer_phone }}</span>
+                </div>
+              }
+              @if (item.notes) {
+                <div class="detail-row notes-row">
+                  <span class="detail-label">Notes:</span>
+                  <span class="detail-value note-text">{{ item.notes }}</span>
+                </div>
+              }
+            </div>
+
+            <!-- Action buttons -->
+            <div class="urgent-card-actions">
+              <button class="btn btn-success btn-sm" (click)="openDeliverModal(item)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                <span>Mark Delivered</span>
+              </button>
+
+              @if (item.customer_phone) {
+                <a [href]="getWhatsAppUrl(item)" target="_blank" class="btn btn-whatsapp btn-sm" title="Send WhatsApp Reminder">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0 0 12.04 2z"/>
+                  </svg>
+                  <span>WhatsApp</span>
+                </a>
+
+                <a [href]="'tel:' + item.customer_phone" class="btn btn-secondary btn-sm" title="Call Customer">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                  </svg>
+                  <span>Call</span>
+                </a>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </section>
+
+  <!-- Deliver Modal Dialog -->
+  @if (isDeliverModalOpen && selectedSchedule) {
+    <div class="modal-overlay" (click)="closeDeliverModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div>
+            <h3>Confirm Medicine Delivery</h3>
+            <p style="font-size: 0.8rem; color: var(--text-muted);">{{ selectedSchedule.medicine_name }} for {{ selectedSchedule.customer_name }}</p>
+          </div>
+          <button class="btn-close" (click)="closeDeliverModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Next Refill Interval (Days)</label>
+            <div style="position: relative;">
+              <input type="number" min="1" max="365" class="form-input" [(ngModel)]="deliverCycleDays" [disabled]="isCompleteOnly" placeholder="e.g. 8, 16, 30">
+              <span style="position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-size: 0.8rem; color: var(--text-muted); pointer-events: none;">Days</span>
+            </div>
+
+            <!-- Quick Chips for Deliver Modal -->
+            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-top: 8px;">
+              <button type="button" class="pill-btn" (click)="setDeliverCycle(7)">7 days</button>
+              <button type="button" class="pill-btn" (click)="setDeliverCycle(8)">8 days</button>
+              <button type="button" class="pill-btn" (click)="setDeliverCycle(14)">14 days</button>
+              <button type="button" class="pill-btn" (click)="setDeliverCycle(16)">16 days</button>
+              <button type="button" class="pill-btn" (click)="setDeliverCycle(30)">30 days</button>
+            </div>
+
+            @if (!isCompleteOnly) {
+              <div style="margin-top: 8px; font-size: 0.8rem; color: #38bdf8;">
+                📅 Next delivery will be scheduled for: <strong>{{ getComputedDeliverDate() }}</strong>
+              </div>
+            }
+          </div>
+
+          <div class="form-group" style="flex-direction: row; align-items: center; gap: 8px;">
+            <input type="checkbox" id="completeOnlyCheck" [(ngModel)]="isCompleteOnly" style="width: 18px; height: 18px; cursor: pointer;">
+            <label for="completeOnlyCheck" style="cursor: pointer; margin: 0;">One-time prescription (Mark course as Completed)</label>
+          </div>
+
+          <div class="form-group">
+            <label>Delivery Notes (Optional)</label>
+            <textarea class="form-textarea" [(ngModel)]="deliverNotes" placeholder="e.g. Delivered 30 tabs by courier. Patient confirmed receipt."></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="closeDeliverModal()" [disabled]="isProcessingDelivery">Cancel</button>
+          <button class="btn btn-primary" (click)="confirmDelivery()" [disabled]="isProcessingDelivery">
+            {{ isProcessingDelivery ? 'Processing...' : 'Confirm Delivery' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- New Customer Modal Dialog -->
+  @if (isCustomerModalOpen) {
+    <div class="modal-overlay" (click)="closeCustomerModal()">
+      <div class="modal-content" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3>Add New Patient / Customer</h3>
+          <button class="btn-close" (click)="closeCustomerModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>Customer / Patient Full Name *</label>
+            <input type="text" class="form-input" [(ngModel)]="newCustomer.name" placeholder="e.g. John Doe">
+          </div>
+
+          <div class="form-group">
+            <label>Phone Number (WhatsApp capable)</label>
+            <input type="tel" class="form-input" [(ngModel)]="newCustomer.phone" placeholder="e.g. +91 98765 43210">
+          </div>
+
+          <div class="form-group">
+            <label>Delivery Address</label>
+            <textarea class="form-textarea" [(ngModel)]="newCustomer.address" placeholder="e.g. Flat 402, Sunshine Apartments, Green Street"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="closeCustomerModal()" [disabled]="isSubmittingCustomer">Cancel</button>
+          <button class="btn btn-primary" (click)="submitCustomer()" [disabled]="isSubmittingCustomer">
+            {{ isSubmittingCustomer ? 'Saving...' : 'Save Customer' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Phone Alarm & Advance Reminders Modal -->
+  @if (isAlarmSettingsOpen) {
+    <div class="modal-overlay" (click)="closeAlarmSettings()">
+      <div class="modal-content" (click)="$event.stopPropagation()" style="max-width: 520px;">
+        <div class="modal-header">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <div style="font-size: 1.6rem;">⏰</div>
+            <div>
+              <h3 style="margin: 0;">Phone Alarm & Reminders</h3>
+              <p style="margin: 2px 0 0; font-size: 0.775rem; color: var(--text-muted);">
+                Automatic background alerts without opening the app
+              </p>
+            </div>
+          </div>
+          <button class="btn-close" (click)="closeAlarmSettings()">&times;</button>
+        </div>
+
+        <div class="modal-body">
+          <!-- Active Status Banner -->
+          <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: var(--radius-md); padding: 14px 16px; margin-bottom: 16px;">
+            <div style="display: flex; align-items: center; gap: 8px; color: #34d399; font-weight: 700; font-size: 0.9rem; margin-bottom: 4px;">
+              <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; box-shadow: 0 0 8px #10b981;"></span>
+              Android AlarmManager Active
+            </div>
+            <p style="margin: 0; font-size: 0.8rem; color: var(--text-secondary); line-height: 1.4;">
+              Your phone will wake up and alert you with sound & banner at your scheduled time even if the Remainder app is completely closed or your screen is locked.
+            </p>
+            <div style="margin-top: 8px; font-size: 0.775rem; color: #38bdf8;">
+              📌 <strong>{{ registeredAlarmsCount }}</strong> active reminder alarms currently registered in your phone OS.
+            </div>
+          </div>
+
+          <!-- Settings Checkboxes -->
+          <div class="form-group" style="flex-direction: row; align-items: flex-start; gap: 12px; margin-bottom: 14px;">
+            <input type="checkbox" id="tomorrowCheck" [(ngModel)]="alarmPrefs.remindOneDayBefore" style="width: 20px; height: 20px; margin-top: 2px; cursor: pointer;">
+            <div>
+              <label for="tomorrowCheck" style="font-weight: 700; color: var(--text-main); cursor: pointer; margin: 0;">
+                ⏰ Remind 1 Day Before (Tomorrow Alert)
+              </label>
+              <p style="margin: 2px 0 0; font-size: 0.775rem; color: var(--text-muted);">
+                Pops up: <em>"Tomorrow is delivery date for [Patient Name]: [Medicine]"</em>
+              </p>
+            </div>
+          </div>
+
+          <div class="form-group" style="flex-direction: row; align-items: flex-start; gap: 12px; margin-bottom: 16px;">
+            <input type="checkbox" id="todayCheck" [(ngModel)]="alarmPrefs.remindOnDayOfDelivery" style="width: 20px; height: 20px; margin-top: 2px; cursor: pointer;">
+            <div>
+              <label for="todayCheck" style="font-weight: 700; color: var(--text-main); cursor: pointer; margin: 0;">
+                💊 Remind on Delivery Day (Today Alert)
+              </label>
+              <p style="margin: 2px 0 0; font-size: 0.775rem; color: var(--text-muted);">
+                Pops up: <em>"Today is delivery date for [Patient Name]: [Medicine]"</em>
+              </p>
+            </div>
+          </div>
+
+          <!-- Alert Time of Day -->
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label style="font-weight: 600;">Preferred Notification Time (Hour: 0 to 23)</label>
+            <div style="display: flex; gap: 10px; align-items: center;">
+              <select class="form-input" [(ngModel)]="alarmPrefs.reminderHour" style="max-width: 140px;">
+                <option [ngValue]="7">07:00 AM</option>
+                <option [ngValue]="8">08:00 AM</option>
+                <option [ngValue]="9">09:00 AM (Default)</option>
+                <option [ngValue]="10">10:00 AM</option>
+                <option [ngValue]="11">11:00 AM</option>
+                <option [ngValue]="12">12:00 PM</option>
+                <option [ngValue]="14">02:00 PM</option>
+                <option [ngValue]="18">06:00 PM</option>
+                <option [ngValue]="20">08:00 PM</option>
+              </select>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">Alert triggers automatically at this time</span>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="modal-footer">
+          <button class="btn btn-secondary" (click)="closeAlarmSettings()">Cancel</button>
+          <button class="btn btn-primary" (click)="saveAlarmSettings()">Save & Update Alarms</button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

@@ -1,0 +1,146 @@
+<div class="app-layout">
+  <!-- Top Navbar -->
+  <header class="navbar">
+    <div class="navbar-brand">
+      <div class="brand-logo">
+        <img src="assets/logo.png" alt="Remainder Logo" class="brand-logo-img">
+      </div>
+      <div class="brand-info">
+        <span class="brand-name">Remainder</span>
+        <span class="brand-sub">Medicine Refill System</span>
+      </div>
+    </div>
+
+    <!-- Navigation Links (Desktop/Tablet) -->
+    <nav class="nav-links desktop-nav">
+      <a routerLink="/dashboard" routerLinkActive="active" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="7" height="9" x="3" y="3" rx="1"/>
+          <rect width="7" height="5" x="14" y="3" rx="1"/>
+          <rect width="7" height="9" x="14" y="12" rx="1"/>
+          <rect width="7" height="5" x="3" y="16" rx="1"/>
+        </svg>
+        <span>Dashboard</span>
+      </a>
+
+      <a routerLink="/schedules" routerLinkActive="active" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+          <line x1="16" x2="16" y1="2" y2="6"/>
+          <line x1="8" x2="8" y1="2" y2="6"/>
+          <line x1="3" x2="21" y1="10" y2="10"/>
+        </svg>
+        <span>Delivery Schedules</span>
+        @if (urgentCount > 0) {
+          <span class="nav-badge">{{ urgentCount }}</span>
+        }
+      </a>
+
+      <a routerLink="/customers" routerLinkActive="active" class="nav-item">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+          <circle cx="9" cy="7" r="4"/>
+          <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+          <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+        </svg>
+        <span>Customers</span>
+      </a>
+    </nav>
+
+    <!-- User & Storage Actions -->
+    <div class="user-menu">
+      <!-- Download PDF Action -->
+      <button class="btn btn-primary btn-sm" (click)="downloadPdf()" [disabled]="isExportingPdf" title="Download all schedules as PDF">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="12" y1="18" x2="12" y2="12"/>
+          <polyline points="9 15 12 18 15 15"/>
+        </svg>
+        <span>{{ isExportingPdf ? 'Generating...' : 'Download PDF' }}</span>
+      </button>
+
+      <div class="user-info desktop-only">
+        <span class="user-email">{{ userEmail }}</span>
+        <span class="user-role">Standalone Mobile Mode</span>
+      </div>
+
+      <button (click)="logout()" class="btn btn-secondary btn-sm" title="Sign out">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+          <polyline points="16 17 21 12 16 7"/>
+          <line x1="21" x2="9" y1="12" y2="12"/>
+        </svg>
+        <span class="desktop-only">Logout</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Route Content Container -->
+  <main class="main-content">
+    <router-outlet></router-outlet>
+  </main>
+
+  <!-- Mobile Bottom Navigation Bar -->
+  <nav class="mobile-bottom-nav">
+    <a routerLink="/dashboard" routerLinkActive="active" class="mobile-nav-item">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <rect width="7" height="9" x="3" y="3" rx="1"/>
+        <rect width="7" height="5" x="14" y="3" rx="1"/>
+        <rect width="7" height="9" x="14" y="12" rx="1"/>
+        <rect width="7" height="5" x="3" y="16" rx="1"/>
+      </svg>
+      <span>Dashboard</span>
+    </a>
+
+    <a routerLink="/schedules" routerLinkActive="active" class="mobile-nav-item">
+      <div class="icon-wrap">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="18" height="18" x="3" y="4" rx="2" ry="2"/>
+          <line x1="16" x2="16" y1="2" y2="6"/>
+          <line x1="8" x2="8" y1="2" y2="6"/>
+          <line x1="3" x2="21" y1="10" y2="10"/>
+        </svg>
+        @if (urgentCount > 0) {
+          <span class="mobile-badge">{{ urgentCount }}</span>
+        }
+      </div>
+      <span>Schedules</span>
+    </a>
+
+    <a routerLink="/customers" routerLinkActive="active" class="mobile-nav-item">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+        <circle cx="9" cy="7" r="4"/>
+        <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+        <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+      </svg>
+      <span>Patients</span>
+    </a>
+
+    <button class="mobile-nav-item" (click)="downloadPdf()" [disabled]="isExportingPdf" title="Download All Schedules as PDF">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="12" y1="18" x2="12" y2="12"/>
+        <polyline points="9 15 12 18 15 15"/>
+      </svg>
+      <span>{{ isExportingPdf ? 'Exporting...' : 'PDF Report' }}</span>
+    </button>
+  </nav>
+
+  <!-- Global Toast Alert Notifications -->
+  <div class="toast-container">
+    @for (toast of toasts$ | async; track toast.id) {
+      <div class="toast" [ngClass]="'toast-' + toast.type">
+        <div class="toast-content">
+          @if (toast.title) {
+            <div class="toast-title">{{ toast.title }}</div>
+          }
+          <div class="toast-text">{{ toast.message }}</div>
+        </div>
+        <button class="btn-close" (click)="removeToast(toast.id)">&times;</button>
+      </div>
+    }
+  </div>
+</div>
